@@ -1,37 +1,60 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { VideoView, useVideoPlayer } from "expo-video";
+import { useEffect, useState } from "react";
+import { Button, StyleSheet, View, ViewStyle } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  useSharedValue,
+} from "react-native-reanimated";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  initialWindowMetrics,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+export default function Root() {
+  const [move, setMove] = useState(false);
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+  return <Test move={move} onToggle={() => setMove(!move)} />;
+}
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+interface TestProps {
+  move: boolean;
+  onToggle: () => void;
+}
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+function Test({ onToggle, move }: TestProps) {
+  const insets = useSafeAreaInsets();
+  const player = useVideoPlayer(
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    (player) => {
+      player.play();
     }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+  );
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
+    <View
+      style={{
+        flex: 1,
+      }}
+    >
+      <View style={{ paddingTop: move ? insets.top : 0 }}>
+        <VideoView
+          player={player}
+          nativeControls
+          style={{
+            aspectRatio: 16 / 9,
+          }}
+          contentFit="contain"
+        />
+      </View>
+
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <Button title="Move video" onPress={onToggle} />
+      </View>
+    </View>
   );
 }
